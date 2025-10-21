@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "xsmcp": {
+      "type": "streamable-http", 
+      "url": "http://xsmcp:8081/",
+      "headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/event-stream"
+      }
+    }
+  }
+}

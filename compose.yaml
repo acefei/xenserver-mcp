@@ -1,0 +1,46 @@
+services:
+  mcpo:
+    image: ghcr.io/open-webui/mcpo:main
+    pull_policy: always
+    restart: unless-stopped
+    networks:
+      - mcp-network
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./mcpo-config.json:/app/config/config.json:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: ["mcpo", "--config", "/app/config/config.json", "--host", "0.0.0.0", "--port", "8000", "--hot-reload"]
+    depends_on:
+      - xsmcp
+    environment:
+      - MCPO_LOG_LEVEL=DEBUG
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:ollama
+    pull_policy: always
+    restart: unless-stopped
+    networks:
+      - mcp-network
+    ports:
+      - "8000:8080"
+    volumes:
+      - ollama:/root/.ollama
+      - open-webui:/app/backend/data
+    depends_on:
+      - mcpo
+
+  xsmcp:
+    build: ./xenserver-mcp
+    restart: unless-stopped
+    networks:
+      - mcp-network
+    ports:
+      - "8002:8081"
+
+volumes:
+  ollama:
+  open-webui:
+
+networks:
+  mcp-network:
