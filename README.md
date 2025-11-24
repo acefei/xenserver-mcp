@@ -1,123 +1,171 @@
 # XenServer MCP Server
 
-A Model Context Protocol server for XenServer/XCP-ng hypervisors using XenAPI, served through MCPO for AI assistant integration.
+A Model Context Protocol (MCP) server for XenServer/XCP-ng administration. This server enables AI assistants to interact with XenServer infrastructure through natural language.
 
+## Features
 
-## How Components Connect
-```mermaid
-graph TD
-    subgraph Services
-        mcpo[mcpo:8000]
-        open-webui[open-webui:8080]
-        xsmcp[xsmcp:8081]
-    end
-    
-    subgraph Host Ports
-        h1[Host:8001]
-        h2[Host:8000]
-        h3[Host:8002]
-    end
-    
-    mcpo --> h1
-    open-webui --> h2
-    xsmcp --> h3
-    
-    mcpo -->|depends on| xsmcp
-    open-webui -->|depends on| mcpo
-```
-**Data Flow Example**: 
-```
-  User asks "show me all hosts" in the chat box 
-  → Open WebUI calls REST endpoint `/xsmcp/get_all_host_info` 
-  → MCPO translates to MCP protocol 
-  → xenserver-mcp calls XenAPI 
-  → Returns host data
-```
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant O as Open WebUI
-    participant M as MCPO
-    participant X as xenserver-mcp
-    participant A as XenAPI
-    
-    U->>O: Show me all hosts
-    O->>M: REST POST /xsmcp/get_all_host_info
-    M->>X: MCP Protocol (JSON-RPC)
-    X->>A: XenAPI Call
-    A->>X: Host Data
-    X->>M: MCP Response
-    M->>O: REST Response
-    O->>U: Display Host List
-```
+- **Multi-cluster support**: Manage multiple XenServer clusters from a single server
+- **Comprehensive VM management**: List, control, snapshot, and monitor virtual machines
+- **Host management**: Monitor and manage XenServer hosts
+- **Storage operations**: List and manage storage repositories and virtual disks
+- **Network management**: View and manage network configurations
+- **Pool management**: Get pool information and statistics
+- **Template management**: List and work with VM templates
 
-## Quick Start
+## Installation
 
-1. **Configure credentials:**
-   
-   `xenserver-mcp/.env`:
-   ```env
-   XENSERVER_HOST=your-xenserver-host.example.com
-   XENSERVER_USER=root
-   XENSERVER_PASS=your-xenserver-password
-   ```
+### Using uv (Recommended)
 
-2. **Start services:**
-   ```bash
-   docker-compose up -d
-   ```
-
-After starting the services, access them at:
-- **[Open WebUI](https://github.com/open-webui/open-webui)**: http://localhost:8000  
-- **[MCPO](https://github.com/open-webui/mcpo)**: http://localhost:8001/docs
-- **XenServer MCP Server**: http://localhost:8002
-
-
-## How to Use MCP on Open WebUI
-
-1. Open Open WebUI in your browser at http://localhost:8001
-2. Navigate to **Settings** > **External Tools** > **Add Tool Server**
-3. Enter the MCP server URL: `http://localhost:8001/xsmcp`
-4. Save the configuration
-5. Open a **New Chat**
-6. Click the **integrations** button (plus sign icon)
-7. Enable **XenServerMCP** in the Tools list
-
-
-
-## How to Add a New Tool
-
-1. **Write a Python function** in `xenserver-mcp/main.py`:
-```python
-@xenserver_mcp.tool()
-def restart_vm(vm_uuid: str) -> Dict[str, Any]:
-    """Restart a virtual machine by UUID."""  # ← AI sees this description
-    with xenserver_client.session() as session:  # ← Always use context manager
-        vm_ref = session.xenapi.VM.get_by_uuid(vm_uuid)
-        session.xenapi.VM.clean_reboot(vm_ref)
-        return {"status": "restarting", "vm_uuid": vm_uuid}
-```
-
-2. **Rebuild** the service: `docker compose up --build --force-recreate --no-deps -d xsmcp`
-
-3. **Test it:** 
 ```bash
-# Check logs
-docker compose logs -f xsmcp
+# Clone the repository
+git clone https://github.com/acefei/xenserver-mcp.git
+cd xenserver-mcp
 
-# Test MCP protocol connectivity (direct to XenServer MCP service)
-curl -X POST http://localhost:8002/ \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"clientInfo":{"name":"test","version":"1.0.0"}}}'
+# Install with uv
+uv sync
 
-# Test get_all_host_info tool via MCPO
-curl -X 'POST' \
-  'http://localhost:8001/xsmcp/get_all_host_info' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{}'
-
-# Run cmd in the open-webui container
-curl -X 'POST'   'http://mcpo:8000/xsmcp/get_all_host_info'   -H 'accept: application/json'   -H 'Content-Type: application/json'   -d '{}'
+# Or install in editable mode
+uv pip install -e .
 ```
+
+### Using uvx (No installation required)
+
+```bash
+# Run directly from the repository
+uvx --from /path/to/xenserver-mcp xenserver-mcp
+```
+
+## Configuration
+
+The server loads configuration from a JSON file. By default, it looks for `config/clusters.json` in the project directory. You can specify a custom location using the `XENSERVER_CONFIG` environment variable.
+
+Create a configuration file:
+
+```bash
+# Copy the example configuration
+cp config/clusters.json.example config/clusters.json
+
+# Edit with your credentials
+nano config/clusters.json
+```
+
+Example configuration:
+
+```json
+{
+  "production": {
+    "host": "xenserver1.example.com",
+    "username": "root",
+    "password": "your-secure-password"
+  },
+  "development": {
+    "host": "xenserver2.example.com",
+    "username": "root",
+    "password": "another-password"
+  }
+}
+```
+
+**Security Note**: Ensure this file has restricted permissions and is not committed to version control:
+```bash
+chmod 600 config/clusters.json
+```
+
+## Usage
+
+### Running Locally
+
+```bash
+# Run with default configuration (uses config/clusters.json)
+xenserver-mcp
+
+# Or run directly with uv
+uv run xenserver-mcp
+
+# Run with Python module
+python -m xenserver_mcp.server
+
+# Use custom config file via environment variable
+XENSERVER_CONFIG=/path/to/custom/clusters.json xenserver-mcp
+```
+
+### Using with uvx (Recommended for Claude Desktop/VS Code)
+
+```bash
+# Run from local repository (uses default config/clusters.json)
+uvx --from /path/to/xenserver-mcp xenserver-mcp
+
+# With custom config via environment variable
+XENSERVER_CONFIG=/path/to/clusters.json uvx --from /path/to/xenserver-mcp xenserver-mcp
+```
+
+### Using with Claude Desktop
+
+Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+
+**Using uvx (Recommended):**
+```json
+{
+  "mcpServers": {
+    "xenserver": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "/home/feis/repos/xenserver-mcp",
+        "xenserver-mcp"
+      ],
+      "env": {
+        "XENSERVER_CONFIG": "/path/to/your/config/clusters.json"
+      }
+    }
+  }
+}
+```
+
+## Troubleshooting
+
+### Connection Issues
+
+If you see "Not connected to any cluster":
+1. Verify `config/clusters.json` exists and is valid JSON
+2. Check cluster credentials are correct
+3. Ensure XenServer host is reachable
+4. Verify firewall allows HTTPS (443) connections
+
+### Session Timeout
+
+The server automatically reconnects on session timeout. If persistent:
+1. Check XenServer logs for authentication issues
+2. Verify user account has appropriate permissions
+3. Check for network instability
+
+### Permission Errors
+
+Ensure the XenServer user has appropriate permissions:
+- Pool Admin role for full management
+- VM Admin role for VM operations only
+- Read-only role for monitoring
+
+## Security Considerations
+
+1. **Credential Storage**: Configuration file contains plaintext passwords
+   - Use restricted file permissions (600)
+   - Never commit `config/clusters.json` to version control
+   - Consider using environment variables for CI/CD
+   - Keep config/ directory in .gitignore
+
+2. **Network Security**: All communication is over HTTPS
+   - Verify SSL certificates in production
+   - Use VPN for remote access
+
+3. **Audit Logging**: All operations are logged
+   - Review logs regularly
+   - Monitor for unexpected operations
+
+## Contributing
+
+Contributions are welcome! Please:
+1. Follow the existing code style (ruff formatting)
+2. Add tests for new features
+3. Update documentation
+4. Submit pull requests

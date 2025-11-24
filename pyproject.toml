@@ -1,0 +1,45 @@
+[project]
+name = "xenserver-mcp"
+version = "0.1.0"
+description = "MCP implementation for XenServer administration"
+readme = "README.md"
+authors = [
+    { name = "Fei Su", email = "acefei@163.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "mcp>=1.0.0",
+    "xenapi>=24.9.0",
+]
+
+[project.scripts]
+xenserver-mcp = "xenserver_mcp.server:main"
+
+[build-system]
+requires = ["uv_build>=0.8.19,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+package = true
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+    "ruff>=0.13.1",
+]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP", "ARG", "SIM", "TCH", "PTH"]
+ignore = ["E501", "B008", "C901"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["ARG", "SIM"]
