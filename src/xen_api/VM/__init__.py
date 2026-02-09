@@ -104,7 +104,7 @@ class VM:
         for snapshotNo in snapshots:
             with suppress(Exception):
                 vm = VM(self.session, snapshots[snapshotNo])
-                vm.uuid()
+                vm.get_uuid()
                 allSnapshots.append(vm)
 
         return allSnapshots

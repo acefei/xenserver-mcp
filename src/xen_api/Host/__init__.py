@@ -125,3 +125,8 @@ class Host:
         """Get name of Host"""
 
         return self.session.xenapi.host.get_name_label(self.host)
+
+    def get_description(self):
+        """Get description of Host"""
+
+        return self.session.xenapi.host.get_name_description(self.host)
