@@ -35,6 +35,36 @@ uv pip install -e .
 uvx --from /path/to/xenserver-mcp xenserver-mcp
 ```
 
+## Running with Docker
+
+### Using Docker Compose (Recommended)
+
+1. Create a `config/clusters.json` file with your XenServer credentials (see Configuration section).
+2. Run the server:
+
+```bash
+docker-compose up -d
+```
+
+### Using Docker CLI
+
+1. Build the image:
+
+```bash
+docker build -t xenserver-mcp .
+```
+
+2. Run the container:
+
+```bash
+docker run -i --rm \
+  -v $(pwd)/config:/app/config \
+  -e PYTHONHTTPSVERIFY=0 \
+  xenserver-mcp
+```
+
+Note: The `-i` flag is important to keep stdin open for MCP communication.
+
 ## Configuration
 
 The server loads configuration from a JSON file. By default, it looks for `config/clusters.json` in the project directory. You can specify a custom location using the `XENSERVER_CONFIG` environment variable.

@@ -1,0 +1,23 @@
+# Pre-commit hooks for xenserver-mcp
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.13.1
+    hooks:
+      - id: ruff
+        args: [--fix]
+        name: ruff lint
+      - id: ruff-format
+        name: ruff format
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: uv run pytest tests/ -v
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]

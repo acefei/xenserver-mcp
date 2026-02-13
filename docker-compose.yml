@@ -1,0 +1,12 @@
+services:
+  xenserver-mcp:
+    build: .
+    image: xenserver-mcp:latest
+    volumes:
+      - ./config:/app/config
+    environment:
+      - PYTHONHTTPSVERIFY=0
+      - XENSERVER_CONFIG=/app/config/clusters.json
+    # Keep stdin open for MCP communication if needed
+    stdin_open: true
+    tty: false

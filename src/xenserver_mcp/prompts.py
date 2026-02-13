@@ -80,3 +80,56 @@ def vm_lifecycle_workflow() -> str:
    - Delete snapshots if no longer needed
    - Remove VM and associated VDIs
 """
+
+
+def storage_management_workflow() -> str:
+    return """Storage Management Workflow:
+
+1. Discovery:
+   - Use 'list_storage_repositories' to see all SRs and their utilization
+   - Use 'get_sr_info' to see VDIs within a specific SR
+   - Use 'list_vdis' to find specific virtual disks across the cluster
+
+2. Maintenance:
+   - Use 'scan_sr' to refresh SR content after manual changes or LUN resizing
+   - Use 'get_vdi_info' to check VDI physical utilization vs virtual size
+   - Use 'resize_vdi' to expand disk capacity (requires filesystem resize in guest)
+
+3. VM Disk Operations:
+   - Use 'list_vm_disks' to see all VBDs (Virtual Block Devices) for a VM
+   - Use 'attach_disk_to_vm' to add an existing VDI to a VM
+   - Use 'detach_disk_from_vm' to safely remove a disk from a VM
+   - Use 'mount_iso' and 'eject_iso' for CD/DVD operations
+"""
+
+
+def network_management_workflow() -> str:
+    return """Network Management Workflow:
+
+1. Infrastructure:
+   - Use 'list_networks' to see available virtual networks
+   - Use 'list_pifs' to see physical interfaces and their IP configurations
+   - Use 'get_network_info' to check MTU and bridge information
+
+2. VM Connectivity:
+   - Use 'list_vm_vifs' to see all virtual interfaces for a VM
+   - Use 'get_vif_info' to check MAC addresses and network attachments
+   - Use 'plug_vif' and 'unplug_vif' for hot-plugging network interfaces
+"""
+
+
+def host_maintenance_workflow() -> str:
+    return """Host Maintenance Workflow:
+
+1. Preparation:
+   - Use 'get_host_metrics' to check current load and memory availability
+   - Use 'disable_host' to prevent new VMs from starting on the host
+
+2. Evacuation:
+   - Use 'evacuate_host' to live-migrate all running VMs to other pool members
+   - Verify all VMs have moved using 'list_vms' or 'get_host_info'
+
+3. Post-Maintenance:
+   - Use 'enable_host' to allow VM placement again
+   - Optionally use 'reboot_vm' or 'start_vm' for any VMs that were shut down
+"""
