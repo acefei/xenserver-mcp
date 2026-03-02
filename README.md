@@ -1,4 +1,4 @@
-# XenServer MCP Server
+# XenServer MCP Server Draft
 
 A Model Context Protocol (MCP) server for XenServer/XCP-ng administration. This server enables AI assistants to interact with XenServer infrastructure through natural language.
 
